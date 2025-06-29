@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <title>Anomalyze - Startseite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b0c1a;
+            color: #fff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        header {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #00aaff;
+            text-shadow: 0 0 8px #00aaff;
+        }
+        main {
+            background: #1a1c2c;
+            padding: 30px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0, 128, 255, 0.5);
+            text-align: center;
+        }
+        a.button {
+            display: inline-block;
+            margin: 15px 10px 0;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            color: #fff;
+            background-color: #0078d7;
+            border-radius: 6px;
+            text-decoration: none;
+            box-shadow: 0 0 10px #0078d7;
+            transition: background-color 0.3s ease;
+        }
+        a.button:hover {
+            background-color: #005a9e;
+        }
+        p {
+            font-size: 1.2em;
+            line-height: 1.5em;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header>Anomalyze</header>
+    <main>
+        <p>Willkommen bei Anomalyze – der Plattform zur Überwachung und Kontrolle von Satellitendaten im Weltraum.</p>
+        <a href="{{ url_for('login') }}" class="button">Anmelden</a>
+        <a href="{{ url_for('register') }}" class="button">Registrieren</a>
+    </main>
+</body>
+</html>
+

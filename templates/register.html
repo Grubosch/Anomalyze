@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrieren - Anomalyze</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b0c1a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        form {
+            background: #1a1c2c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 128, 255, 0.5);
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0 16px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+        input.error {
+            border-color: red;
+        }
+        .error-message {
+            color: red;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #0078d7;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+    </style>
+</head>
+<body>
+    <form method="POST" action="{{ url_for('register') }}" oninput="checkPasswords()">
+        <h2>Registrierung bei Anomalyze</h2>
+
+        <label for="username">Benutzername:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Passwort:</label>
+        <input type="password" id="password" name="password" required>
+
+        <label for="confirm_password">Passwort wiederholen:</label>
+        <input type="password" id="confirm_password" name="confirm_password" required>
+
+        <div class="error-message" id="password-error" style="display:none;">
+            Die Passwörter stimmen nicht überein.
+        </div>
+
+        <button type="submit">Registrieren</button>
+    </form>
+
+    <script>
+        function checkPasswords() {
+            const pw1 = document.getElementById('password');
+            const pw2 = document.getElementById('confirm_password');
+            const errorMsg = document.getElementById('password-error');
+
+            if (pw1.value && pw2.value) {
+                if (pw1.value !== pw2.value) {
+                    pw1.classList.add('error');
+                    pw2.classList.add('error');
+                    errorMsg.style.display = 'block';
+                } else {
+                    pw1.classList.remove('error');
+                    pw2.classList.remove('error');
+                    errorMsg.style.display = 'none';
+                }
+            } else {
+                pw1.classList.remove('error');
+                pw2.classList.remove('error');
+                errorMsg.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
+

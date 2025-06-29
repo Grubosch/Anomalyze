@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <title>Anomalyze - Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b0c1a;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        form {
+            background: #1a1c2c;
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 128, 255, 0.5);
+            width: 320px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #00aaff;
+            text-align: center;
+            text-shadow: 0 0 8px #00aaff;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0 16px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #0078d7;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        .register-link {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .register-link a {
+            color: #00aaff;
+            text-decoration: none;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        /* Flash messages */
+        .flash-messages {
+            background: #440000;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            color: #ffcccc;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <form method="POST" action="{{ url_for('login') }}">
+        <h2>Anmelden</h2>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for message in messages %}
+                <div>{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <label for="username">Benutzername:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Passwort:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Login</button>
+
+        <div class="register-link">
+            Noch keinen Account? <a href="{{ url_for('register') }}">Registrieren</a>
+        </div>
+    </form>
+</body>
+</html>
