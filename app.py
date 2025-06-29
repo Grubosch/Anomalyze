@@ -8,6 +8,18 @@ app.secret_key = "dein_geheimes_schluessel"  # für Sessions, ändere das unbedi
 
 DATABASE = 'database.db'
 
+def init_db():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL
+        );
+    ''')
+    conn.commit()
+    conn.close()
+
 def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
@@ -87,5 +99,6 @@ def dashboard():
 
 
 if __name__ == '__main__':
+    init_db()
     get_db_connection()
     app.run(host="0.0.0.0", port=5000)
