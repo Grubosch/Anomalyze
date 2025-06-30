@@ -12,6 +12,72 @@ import numpy as np
 import pandas as pd
 from flask import jsonify
 
+
+
+
+
+app = Flask(__name__)
+app.secret_key = "dein_geheimes_schluessel"  # für Sessions, ändere das unbedingt
+
+DATABASE = 'database.db'
+
+def init_db():
+    conn = get_db_connection()
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password TEXT NOT NULL
+        );
+    ''')
+    conn.commit()
+    conn.close()
+
+def get_db_connection():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        # 1) Passwortgleichheit prüfen
+        if password != confirm_password:
+            flash('Die Passwörter stimmen nicht überein.')
+            return redirect(url_for('register'))
+
+        # 2) Existiert der Benutzer bereits?
+        conn = get_db_connection()
+        existing_user = conn.execute(
+            'SELECT id FROM users WHERE username = ?', (username,)
+        ).fetchone()
+        if existing_user:
+            conn.close()
+            flash('Benutzername bereits vergeben.')
+            return redirect(url_for('register'))
+
+        # 3) Benutzer anlegen
+        password_hash = generate_password_hash(password)
+        conn.execute(
+            'INSERT INTO users (username, password) VALUES (?, ?)',
+            (username, password_hash)
+        )
+        conn.commit()
+        conn.close()
+        flash('Registrierung erfolgreich. Bitte logge dich ein.')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+
 NOAA_BASE_URL = "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes18/l1b/seis-l1b-sgps/"
 
 def download_and_extract_goes18_data(start_date, end_date, download_dir="data"):
@@ -80,69 +146,6 @@ def get_data():
         return jsonify({"error": "Keine Daten gefunden."}), 404
 
     return df.to_json(orient="records", date_format="iso")
-
-
-
-app = Flask(__name__)
-app.secret_key = "dein_geheimes_schluessel"  # für Sessions, ändere das unbedingt
-
-DATABASE = 'database.db'
-
-def init_db():
-    conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
-        );
-    ''')
-    conn.commit()
-    conn.close()
-
-def get_db_connection():
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row
-    return conn
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        confirm_password = request.form['confirm_password']
-
-        # 1) Passwortgleichheit prüfen
-        if password != confirm_password:
-            flash('Die Passwörter stimmen nicht überein.')
-            return redirect(url_for('register'))
-
-        # 2) Existiert der Benutzer bereits?
-        conn = get_db_connection()
-        existing_user = conn.execute(
-            'SELECT id FROM users WHERE username = ?', (username,)
-        ).fetchone()
-        if existing_user:
-            conn.close()
-            flash('Benutzername bereits vergeben.')
-            return redirect(url_for('register'))
-
-        # 3) Benutzer anlegen
-        password_hash = generate_password_hash(password)
-        conn.execute(
-            'INSERT INTO users (username, password) VALUES (?, ?)',
-            (username, password_hash)
-        )
-        conn.commit()
-        conn.close()
-        flash('Registrierung erfolgreich. Bitte logge dich ein.')
-        return redirect(url_for('login'))
-
-    return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
