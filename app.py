@@ -3,6 +3,86 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 import sqlite3, hashlib
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import os
+import requests
+import gzip
+import shutil
+import datetime as dt
+import numpy as np
+import pandas as pd
+from flask import jsonify
+
+NOAA_BASE_URL = "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes18/l1b/seis-l1b-sgps/"
+
+def download_and_extract_goes18_data(start_date, end_date, download_dir="data"):
+    os.makedirs(download_dir, exist_ok=True)
+    current_date = start_date
+
+    all_data = []
+
+    while current_date <= end_date:
+        date_str = current_date.strftime("%Y%m%d")
+        url = f"{NOAA_BASE_URL}{current_date.strftime('%Y/%m/%d')}/"
+
+        # Versuch, Verzeichnislisting abzurufen:
+        try:
+            response = requests.get(url)
+            if response.status_code != 200:
+                print(f"Kein Verzeichnis für {date_str} gefunden (HTTP {response.status_code}).")
+                current_date += dt.timedelta(days=1)
+                continue
+
+            # Suche alle SEIS-Dateien (Beispiel: sei_sgps_g18_dYYYYMMDD_tHHMMZ_cXXXX.nc.gz)
+            filenames = [line.split('href="')[1].split('"')[0] for line in response.text.splitlines() if ".nc.gz" in line]
+
+            for fname in filenames:
+                file_url = url + fname
+                local_path = os.path.join(download_dir, fname)
+                print(f"Lade {file_url} herunter...")
+                r = requests.get(file_url, stream=True)
+                with open(local_path, 'wb') as f:
+                    f.write(r.content)
+                
+                # Optional: entpacken, analysieren usw. Hier nur Demo:
+                # with gzip.open(local_path, 'rb') as f_in:
+                #     with open(local_path[:-3], 'wb') as f_out:
+                #         shutil.copyfileobj(f_in, f_out)
+
+                # Simulierte Messwerte (Demo):
+                times = pd.date_range(current_date, periods=10, freq="H")
+                energies = np.random.rand(10, 5)  # 5 Kanäle
+                df = pd.DataFrame(energies, index=times, columns=[f"Channel_{i}" for i in range(1, 6)])
+                all_data.append(df)
+
+        except Exception as e:
+            print(f"Fehler beim Download {date_str}: {e}")
+
+        current_date += dt.timedelta(days=1)
+
+    if not all_data:
+        return None
+    
+    result_df = pd.concat(all_data).sort_index()
+    return result_df.reset_index().rename(columns={"index": "time"})
+
+@app.route("/data")
+def get_data():
+    start = request.args.get("start")
+    end = request.args.get("end")
+    try:
+        start_dt = dt.datetime.strptime(start, "%Y-%m-%d")
+        end_dt = dt.datetime.strptime(end, "%Y-%m-%d")
+    except Exception:
+        return jsonify({"error": "Ungültiges Datum. Bitte Format YYYY-MM-DD verwenden."}), 400
+
+    df = download_and_extract_goes18_data(start_dt, end_dt)
+    if df is None:
+        return jsonify({"error": "Keine Daten gefunden."}), 404
+
+    return df.to_json(orient="records", date_format="iso")
+
+
+
 app = Flask(__name__)
 app.secret_key = "dein_geheimes_schluessel"  # für Sessions, ändere das unbedingt
 

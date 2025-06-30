@@ -2,60 +2,66 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8" />
-    <title>Anomalyze - Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0b0c1a;
-            color: #fff;
-            margin: 0;
-            padding: 40px 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        header {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 30px;
-            color: #00aaff;
-            text-shadow: 0 0 8px #00aaff;
-            width: 100%;
-            text-align: center;
-        }
-        main {
-            background: #1a1c2c;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 700px;
-            width: 100%;
-            box-shadow: 0 0 20px rgba(0, 128, 255, 0.5);
-            text-align: center;
-        }
-        a.button {
-            margin-top: 25px;
-            display: inline-block;
-            padding: 12px 30px;
-            font-size: 1.1em;
-            color: #fff;
-            background-color: #0078d7;
-            border-radius: 6px;
-            text-decoration: none;
-            box-shadow: 0 0 10px #0078d7;
-            transition: background-color 0.3s ease;
-        }
-        a.button:hover {
-            background-color: #005a9e;
-        }
-    </style>
+    <title>Anomalyze Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body>
-    <header>Dashboard - Anomalyze</header>
-    <main>
-        <p>In Zukunft werden hier Daten angezeigt.</p>
-        <a href="{{ url_for('logout') }}" class="button">Abmelden</a>
-    </main>
+<body style="background:#0b0c1a; color:white; font-family:sans-serif;">
+    <h1>Anomalyze Dashboard</h1>
+
+    <label>Startdatum: <input type="date" id="startDate"></label>
+    <label>Enddatum: <input type="date" id="endDate"></label>
+    <button onclick="fetchData()">Daten laden</button>
+
+    <div id="channelSelector"></div>
+    <div id="plot"></div>
+
+    <script>
+        let allData = [];
+        let activeChannels = [];
+
+        function fetchData() {
+            const start = document.getElementById("startDate").value;
+            const end = document.getElementById("endDate").value;
+            fetch(`/data?start=${start}&end=${end}`)
+                .then(response => response.json())
+                .then(data => {
+                    allData = data;
+                    setupChannelSelector(Object.keys(data[0]).filter(k => k !== "time"));
+                    plotData();
+                })
+                .catch(e => alert("Fehler beim Abruf der Daten: " + e));
+        }
+
+        function setupChannelSelector(channels) {
+            const container = document.getElementById("channelSelector");
+            container.innerHTML = "";
+            channels.forEach(ch => {
+                const cb = document.createElement("input");
+                cb.type = "checkbox";
+                cb.id = ch;
+                cb.checked = true;
+                cb.onchange = plotData;
+                container.appendChild(cb);
+
+                const label = document.createElement("label");
+                label.htmlFor = ch;
+                label.innerText = ch;
+                container.appendChild(label);
+
+                container.appendChild(document.createElement("br"));
+            });
+        }
+
+        function plotData() {
+            activeChannels = Array.from(document.querySelectorAll("#channelSelector input:checked")).map(cb => cb.id);
+            const traces = activeChannels.map(ch => ({
+                x: allData.map(d => d.time),
+                y: allData.map(d => d[ch]),
+                mode: 'lines',
+                name: ch
+            }));
+            Plotly.newPlot('plot', traces, {title: 'Energieflüsse'});
+        }
+    </script>
 </body>
 </html>
-
