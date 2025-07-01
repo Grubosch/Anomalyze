@@ -17,7 +17,7 @@ SATELLITES = [
     "goes19",
 ]
 
-BASE_URL = "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/{sat}/l1b/seis-l1b-sgps/"
+BASE_URL = "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/{sat}/l1b/seis-l1b-sgps/"
 
 def already_downloaded(conn, satellite, date):
     query = text("""
