@@ -10,7 +10,7 @@ from urllib.parse import urljoin
 # KONFIGURATION
 GOES_SATELLITES = ["goes16", "goes17", "goes18", "goes19"]
 BASE_URL = "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/"
-DB_URI = "postgresql+psycopg2://goes_user:zbS2M@localhost/goes_data"  
+DB_URI = "postgresql+psycopg2://goes:zbS2M@localhost/goes_data"  
 LOCAL_DOWNLOAD_DIR = "./downloads"
 
 def ensure_download_dir():
