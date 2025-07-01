@@ -76,7 +76,7 @@ def main():
 
     engine = create_engine(DB_URI)
     with engine.connect() as conn:
-        result = conn.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_name = 'particle_flux';")
+        result = conn.execute(text("SELECT table_schema, table_name FROM information_schema.tables WHERE table_name = 'particle_flux';"))
         for row in result:
             print(row)
     conn=engine.connect()
