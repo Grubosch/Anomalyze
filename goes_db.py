@@ -78,21 +78,25 @@ def main():
                 print(f"Konnte Index-Seite nicht öffnen: {url_base}")
                 continue
 
-            # Finde alle Jahresordner (z.B. "2024/", "2025/") auf der Website
-            years = [line.split('"')[1].rstrip('/')
-                     for line in resp.text.splitlines()
-                     if line.strip().startswith('<a href="20')]
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            years = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href and href.startswith('20') and href.endswith('/'):
+                    years.append(href.rstrip('/'))
 
-            for year in years:
+           for year in years:
                 year_url = urljoin(url_base, f"{year}/")
                 resp_year = requests.get(year_url)
                 if resp_year.status_code != 200:
                     continue
-                # Finde alle .nc-Dateien
-                nc_files = [line.split('"')[1]
-                            for line in resp_year.text.splitlines()
-                            if line.strip().endswith(".nc\">")]
 
+                soup_year = BeautifulSoup(resp_year.text, 'html.parser')
+                nc_files = []
+                for link in soup_year.find_all('a'):
+                    href = link.get('href')
+                    if href and href.endswith('.nc'):
+                        nc_files.append(href)
                 for nc_file in nc_files:
                     date_str = nc_file.split("_")[1]  # z.B. "20250701"
                     file_date = datetime.datetime.strptime(date_str, "%Y%m%d").date()
