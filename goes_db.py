@@ -75,6 +75,10 @@ def main():
     ensure_download_dir()
 
     engine = create_engine(DB_URI)
+    with engine.connect() as conn:
+        res = conn.execute(text("SELECT current_database();")).fetchone()
+    print(res)
+
     conn=engine.connect()
 
     for sat in GOES_SATELLITES:
