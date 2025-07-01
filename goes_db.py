@@ -85,7 +85,7 @@ def main():
                 if href and href.startswith('20') and href.endswith('/'):
                     years.append(href.rstrip('/'))
 
-           for year in years:
+            for year in years:
                 year_url = urljoin(url_base, f"{year}/")
                 resp_year = requests.get(year_url)
                 if resp_year.status_code != 200:
