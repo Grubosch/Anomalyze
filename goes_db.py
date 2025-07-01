@@ -5,6 +5,7 @@ import netCDF4
 import numpy as np
 from sqlalchemy import create_engine, text
 from urllib.parse import urljoin
+from bs4 import BeautifulSoup
 
 # Datenbankverbindung (dein Passwort hier einsetzen)
 DB_URI = "postgresql+psycopg2://goes:zbS2M@localhost/goes_data"
