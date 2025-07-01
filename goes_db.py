@@ -65,7 +65,7 @@ def parse_nc_and_store(local_file, sat, engine):
 
 
 def already_downloaded(conn, satellite, date):
-    query = text("SELECT 1 FROM particle_flux WHERE satellite = :satellite AND DATE(time) = :date LIMIT 1;")
+    query = text("SELECT 1 FROM public.particle_flux WHERE satellite = :satellite AND DATE(time) = :date LIMIT 1;")
     res = conn.execute(query, {"satellite": satellite, "date": date}).fetchone()
     return res is not None
 
@@ -75,10 +75,6 @@ def main():
     ensure_download_dir()
 
     engine = create_engine(DB_URI)
-    with engine.connect() as conn:
-        result = conn.execute(text("SELECT table_schema, table_name FROM information_schema.tables WHERE table_name = 'particle_flux';"))
-        for row in result:
-            print(row)
     conn=engine.connect()
 
     for sat in GOES_SATELLITES:
