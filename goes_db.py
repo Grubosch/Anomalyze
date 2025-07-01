@@ -6,6 +6,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 from datetime import datetime
 from urllib.parse import urljoin
+from sqlalchemy import text
 
 # KONFIGURATION
 GOES_SATELLITES = ["goes16", "goes17", "goes18", "goes19"]
@@ -62,11 +63,11 @@ def parse_nc_and_store(local_file, sat, engine):
     df.to_sql("particle_flux", engine, if_exists='append', index=False)
     print(f"[OK] Daten aus {local_file} in DB gespeichert.")
 
-def already_downloaded(engine, sat, date):
-    query = f"SELECT 1 FROM particle_flux WHERE satellite='{sat}' AND DATE(time)='{date}' LIMIT 1;"
-    with engine.connect() as conn:
-        res = conn.execute(query).fetchone()
-        return res is not None
+
+def already_downloaded(conn, satellite, date):
+    query = text("SELECT 1 FROM particle_flux WHERE satellite = :satellite AND DATE(time) = :date LIMIT 1;")
+    res = conn.execute(query, {"satellite": satellite, "date": date}).fetchone()
+    return res is not None
 
 def main():
     today = datetime.utcnow().date()
@@ -74,9 +75,10 @@ def main():
     ensure_download_dir()
 
     engine = create_engine(DB_URI)
+    conn=engine.connect()
 
     for sat in GOES_SATELLITES:
-        if already_downloaded(engine, sat, today):
+        if already_downloaded(conn, sat, today):
             print(f"[{sat}] Daten für heute {today} schon in DB.")
             continue
 
