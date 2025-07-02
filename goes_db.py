@@ -11,7 +11,7 @@ import re
 
 # Datenbankverbindung (dein Passwort hier einsetzen)
 DB_URI = "postgresql+psycopg2://goes:zbS2M@localhost/goes_data"
-
+engine = create_engine(DB_URI)
 # Satelliten-URLs
 SATELLITES = [
     "goes16",
