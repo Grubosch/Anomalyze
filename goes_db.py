@@ -40,32 +40,63 @@ def download_file(url, local_filename):
     return True
 
 def process_and_store_nc(conn, sat, filepath):
+import numpy as np
+import netCDF4
+from sqlalchemy.sql import text
+
+def process_and_store_nc(conn, sat, filepath):
     ds = netCDF4.Dataset(filepath)
-    times = ds.variables['L1a_SciData_TimeStamp'][:]  # time dimension
+    
+    # Zeit auslesen
+    times = ds.variables['L1a_SciData_TimeStamp'][:]
     time_units = ds.variables['L1a_SciData_TimeStamp'].units
     base_time = netCDF4.num2date(times, time_units)
-    energy = ds.variables['L1a_EngData_Flag'][:]  # energy levels
-    flux = ds.variables['T1_DifferentialProtonFluxes'][:]  # shape: time x species x energy
-    #species_var = ds.variables['Instrument_Serial_Number']  # variable with species names
-    #species_names = [s.tostring().decode('ascii').strip() for s in species_var[:]]
+    
+    # Energiewerte aus einem passenden Array (hier als Beispiel L1a_EngData_Flag rausgenommen, lieber energy_T1 nehmen)
+    energy = ds.variables['energy_T1'][:]  # Energie-Bins für T1, ähnlich für T2 und T3
+    
+    # Protonfluss-Daten auslesen
+    flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]  # dims: Zeit x Energie
+    flux_T2 = ds.variables['T2_DifferentialProtonFluxes'][:]
+    flux_T3 = ds.variables['T3_DifferentialProtonFluxes'][:]
 
-    # Insert each measurement
     for t_idx, time_val in enumerate(base_time):
-        #for s_idx, species in enumerate(species_names):
         for e_idx, energy_val in enumerate(energy):
-            flux_val = flux[t_idx, e_idx]
-            if np.isnan(flux_val):
-                continue  # skip missing data
-            ins = text("""
-                INSERT INTO particle_flux (satellite, time, species, energy, flux)
-                VALUES (:satellite, :time, :species, :energy, :flux)
-            """)
-            conn.execute(ins, {
-                "satellite": sat,
-                "time": time_val,
-                "energy": float(energy_val),
-                "flux": float(flux_val)
-            })
+            # T1
+            flux_val = flux_T1[t_idx, e_idx]
+            if not np.isnan(flux_val):
+                ins = text("""
+                    INSERT INTO particle_flux (satellite, time, species, energy, flux)
+                    VALUES (:satellite, :time, :species, :energy, :flux)
+                """)
+                conn.execute(ins, {
+                    "satellite": sat,
+                    "time": time_val,
+                    "species": "T1",
+                    "energy": float(energy_val),
+                    "flux": float(flux_val)
+                })
+            # T2
+            flux_val = flux_T2[t_idx, e_idx]
+            if not np.isnan(flux_val):
+                conn.execute(ins, {
+                    "satellite": sat,
+                    "time": time_val,
+                    "species": "T2",
+                    "energy": float(energy_val),
+                    "flux": float(flux_val)
+                })
+            # T3
+            flux_val = flux_T3[t_idx, e_idx]
+            if not np.isnan(flux_val):
+                conn.execute(ins, {
+                    "satellite": sat,
+                    "time": time_val,
+                    "species": "T3",
+                    "energy": float(energy_val),
+                    "flux": float(flux_val)
+                })
+
 
 def main():
     engine = create_engine(DB_URI)
