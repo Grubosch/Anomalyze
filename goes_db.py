@@ -48,50 +48,46 @@ def process_and_store_nc(conn, sat, filepath):
     time_units = ds.variables['L1a_SciData_TimeStamp'].units
     base_time = netCDF4.num2date(times, time_units)
     
-    # Energiewerte aus einem passenden Array (hier als Beispiel L1a_EngData_Flag rausgenommen, lieber energy_T1 nehmen)
-    energy = ds.variables['energy_T1_label'][:]  # Energie-Bins für T1, ähnlich für T2 und T3
-    
     # Protonfluss-Daten auslesen
-    flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]  # dims: Zeit x Energie
+    flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]  # dims: Zeit x Energie (Energie ignorieren)
     flux_T2 = ds.variables['T2_DifferentialProtonFluxes'][:]
     flux_T3 = ds.variables['T3_DifferentialProtonFluxes'][:]
 
     for t_idx, time_val in enumerate(base_time):
-        for e_idx, energy_val in enumerate(energy):
-            # T1
-            flux_val = flux_T1[t_idx, e_idx]
-            if not np.isnan(flux_val):
-                ins = text("""
-                    INSERT INTO particle_flux (satellite, time, species, energy, flux)
-                    VALUES (:satellite, :time, :species, :energy, :flux)
-                """)
-                conn.execute(ins, {
-                    "satellite": sat,
-                    "time": time_val,
-                    "species": "T1",
-                    "energy": float(energy_val),
-                    "flux": float(flux_val)
-                })
-            # T2
-            flux_val = flux_T2[t_idx, e_idx]
-            if not np.isnan(flux_val):
-                conn.execute(ins, {
-                    "satellite": sat,
-                    "time": time_val,
-                    "species": "T2",
-                    "energy": float(energy_val),
-                    "flux": float(flux_val)
-                })
-            # T3
-            flux_val = flux_T3[t_idx, e_idx]
-            if not np.isnan(flux_val):
-                conn.execute(ins, {
-                    "satellite": sat,
-                    "time": time_val,
-                    "species": "T3",
-                    "energy": float(energy_val),
-                    "flux": float(flux_val)
-                })
+        # Summe oder Mittelwert über alle Energie-Bins? Hier als Beispiel Summe:
+        flux_sum_T1 = np.nansum(flux_T1[t_idx, :])
+        flux_sum_T2 = np.nansum(flux_T2[t_idx, :])
+        flux_sum_T3 = np.nansum(flux_T3[t_idx, :])
+
+        ins = text("""
+            INSERT INTO particle_flux (satellite, time, species, flux)
+            VALUES (:satellite, :time, :species, :flux)
+        """)
+
+        # T1
+        if not np.isnan(flux_sum_T1):
+            conn.execute(ins, {
+                "satellite": sat,
+                "time": time_val,
+                "species": "T1",
+                "flux": float(flux_sum_T1)
+            })
+        # T2
+        if not np.isnan(flux_sum_T2):
+            conn.execute(ins, {
+                "satellite": sat,
+                "time": time_val,
+                "species": "T2",
+                "flux": float(flux_sum_T2)
+            })
+        # T3
+        if not np.isnan(flux_sum_T3):
+            conn.execute(ins, {
+                "satellite": sat,
+                "time": time_val,
+                "species": "T3",
+                "flux": float(flux_sum_T3)
+            })
 
 
 def main():
