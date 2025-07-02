@@ -40,55 +40,54 @@ def download_file(url, local_filename):
     return True
 
 
-def cftime_to_datetime(dt):
-    # Konvertiere cftime-Objekt in datetime.datetime (ohne Zeitzone)
-    if hasattr(dt, 'isoformat'):
-        return datetime.fromisoformat(dt.isoformat())
-    return dt  # Fallback
+
+def convert_time(t):
+    if isinstance(t, np.ma.MaskedArray):
+        t = t.data
+    if hasattr(t, 'isoformat'):
+        return datetime.fromisoformat(t.isoformat())
+    return t
 
 def process_and_store_nc(conn, sat, filepath):
     ds = netCDF4.Dataset(filepath)
-    
     times = ds.variables['L1a_SciData_TimeStamp'][:]
     time_units = ds.variables['L1a_SciData_TimeStamp'].units
-    
     base_time = netCDF4.num2date(times, time_units)
-
-    # Falls base_time ein MaskedArray ist, konvertiere es in Liste von datetime
-    base_time = [cftime_to_datetime(t) for t in base_time]
-
+    
     flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]
     flux_T2 = ds.variables['T2_DifferentialProtonFluxes'][:]
     flux_T3 = ds.variables['T3_DifferentialProtonFluxes'][:]
-
+    
     ins = text("""
         INSERT INTO particle_flux (satellite, time, species, flux)
         VALUES (:satellite, :time, :species, :flux)
     """)
-
+    
     for t_idx, time_val in enumerate(base_time):
+        time_std = convert_time(time_val)
+        
         flux_sum_T1 = np.nansum(flux_T1[t_idx, :])
         flux_sum_T2 = np.nansum(flux_T2[t_idx, :])
         flux_sum_T3 = np.nansum(flux_T3[t_idx, :])
-
+        
         if not np.isnan(flux_sum_T1):
             conn.execute(ins, {
                 "satellite": sat,
-                "time": time_val,
+                "time": time_std,
                 "species": "T1",
                 "flux": float(flux_sum_T1)
             })
         if not np.isnan(flux_sum_T2):
             conn.execute(ins, {
                 "satellite": sat,
-                "time": time_val,
+                "time": time_std,
                 "species": "T2",
                 "flux": float(flux_sum_T2)
             })
         if not np.isnan(flux_sum_T3):
             conn.execute(ins, {
                 "satellite": sat,
-                "time": time_val,
+                "time": time_std,
                 "species": "T3",
                 "flux": float(flux_sum_T3)
             })
