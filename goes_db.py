@@ -49,7 +49,7 @@ def convert_time(t):
     if hasattr(t, 'year') and hasattr(t, 'month') and hasattr(t, 'day'):
         print(t)
         print(type(t))
-        return datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
+        return datetime.datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
     return t
 
 def process_and_store_nc(conn, sat, filepath):
