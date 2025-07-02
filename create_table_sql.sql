@@ -54,5 +54,5 @@ CREATE TABLE particle_flux (
     ProtonT3.5 TEXT,
     ProtonT3.5_unc TEXT,
     AlphaT3.5 TEXT, 
-    AlphaT3.5_unc TEXT,
+    AlphaT3.5_unc TEXT
 )
