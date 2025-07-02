@@ -47,8 +47,6 @@ def convert_time(t):
         t = t.data
     # Falls cftime-Objekt, in datetime umwandeln
     if hasattr(t, 'year') and hasattr(t, 'month') and hasattr(t, 'day'):
-        print(t)
-        print(type(t))
         return datetime.datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
     return t
 
