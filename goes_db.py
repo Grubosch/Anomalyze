@@ -41,8 +41,8 @@ def download_file(url, local_filename):
 
 def process_and_store_nc(conn, sat, filepath):
     ds = netCDF4.Dataset(filepath)
-    times = ds.variables['time'][:]  # time dimension
-    time_units = ds.variables['time'].units
+    times = ds.variables['L1a_SciData_TimeStamp'][:]  # time dimension
+    time_units = ds.variables['L1a_SciData_TimeStamp'].units
     base_time = netCDF4.num2date(times, time_units)
     energy = ds.variables['energy'][:]  # energy levels
     flux = ds.variables['flux'][:]  # shape: time x species x energy
