@@ -45,10 +45,10 @@ def convert_time(t):
     # Falls MaskedArray, rohen Wert extrahieren
     if isinstance(t, np.ma.MaskedArray):
         t = t.data
-        print(t)
-        print(type(t))
     # Falls cftime-Objekt, in datetime umwandeln
     if hasattr(t, 'year') and hasattr(t, 'month') and hasattr(t, 'day'):
+        print(t)
+        print(type(t))
         return datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
     return t
 
