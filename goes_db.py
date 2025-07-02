@@ -46,27 +46,26 @@ def process_and_store_nc(conn, sat, filepath):
     base_time = netCDF4.num2date(times, time_units)
     energy = ds.variables['L1a_EngData_Flag'][:]  # energy levels
     flux = ds.variables['T1_DifferentialProtonFluxes'][:]  # shape: time x species x energy
-    species_var = ds.variables['Instrument_Serial_Number']  # variable with species names
-    species_names = [s.tostring().decode('ascii').strip() for s in species_var[:]]
+    #species_var = ds.variables['Instrument_Serial_Number']  # variable with species names
+    #species_names = [s.tostring().decode('ascii').strip() for s in species_var[:]]
 
     # Insert each measurement
     for t_idx, time_val in enumerate(base_time):
-        for s_idx, species in enumerate(species_names):
-            for e_idx, energy_val in enumerate(energy):
-                flux_val = flux[t_idx, s_idx, e_idx]
-                if np.isnan(flux_val):
-                    continue  # skip missing data
-                ins = text("""
-                    INSERT INTO particle_flux (satellite, time, species, energy, flux)
-                    VALUES (:satellite, :time, :species, :energy, :flux)
-                """)
-                conn.execute(ins, {
-                    "satellite": sat,
-                    "time": time_val,
-                    "species": species,
-                    "energy": float(energy_val),
-                    "flux": float(flux_val)
-                })
+        #for s_idx, species in enumerate(species_names):
+        for e_idx, energy_val in enumerate(energy):
+            flux_val = flux[t_idx, e_idx]
+            if np.isnan(flux_val):
+                continue  # skip missing data
+            ins = text("""
+                INSERT INTO particle_flux (satellite, time, species, energy, flux)
+                VALUES (:satellite, :time, :species, :energy, :flux)
+            """)
+            conn.execute(ins, {
+                "satellite": sat,
+                "time": time_val,
+                "energy": float(energy_val),
+                "flux": float(flux_val)
+            })
 
 def main():
     engine = create_engine(DB_URI)
