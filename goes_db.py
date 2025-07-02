@@ -70,23 +70,18 @@ def process_and_store_nc(conn, sat, filepath):
 
 def main():
     engine = create_engine(DB_URI)
-    with engine.begin() as conn:  # transactionally safe
-        for sat in SATELLITES:
-            print(f"Starte Download für {sat}...")
-            url_base = BASE_URL.format(sat=sat)
+for sat in SATELLITES:
+    print(f"Starte Download für {sat}...")
+    url_base = BASE_URL.format(sat=sat)
 
-            # Lade die Index-Seite für die Jahre
-            resp = requests.get(url_base)
-            if resp.status_code != 200:
-                print(f"Konnte Index-Seite nicht öffnen: {url_base}")
-                continue
+    resp = requests.get(url_base)
+    if resp.status_code != 200:
+        print(f"Konnte Index-Seite nicht öffnen: {url_base}")
+        continue
 
-            soup = BeautifulSoup(resp.text, 'html.parser')
-            years = []
-            for link in soup.find_all('a'):
-                href = link.get('href')
-                if href and href.startswith('20') and href.endswith('/'):
-                    years.append(href.rstrip('/'))
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    years = [link.get('href').rstrip('/') for link in soup.find_all('a')
+             if link.get('href') and link.get('href').startswith('20') and link.get('href').endswith('/')]
 
     for year in years:
         year_url = urljoin(url_base, f"{year}/")
@@ -94,51 +89,47 @@ def main():
         if resp_year.status_code != 200:
             continue
 
-    soup_year = BeautifulSoup(resp_year.text, 'html.parser')
-    months = []
-    for link in soup_year.find_all('a'):
-        href = link.get('href')
-        if href and re.match(r'\d{2}/', href):  # z.B. "01/", "12/"
-            months.append(href.rstrip('/'))
+        soup_year = BeautifulSoup(resp_year.text, 'html.parser')
+        months = [link.get('href').rstrip('/') for link in soup_year.find_all('a')
+                  if link.get('href') and re.match(r'\d{2}/', link.get('href'))]
 
-    for month in months:
-        month_url = urljoin(year_url, f"{month}/")
-        resp_month = requests.get(month_url)
-        if resp_month.status_code != 200:
-            continue
-
-        soup_month = BeautifulSoup(resp_month.text, 'html.parser')
-        nc_files = []
-        for link in soup_month.find_all('a'):
-            href = link.get('href')
-            if href and href.endswith('.nc'):
-                nc_files.append(href)
-
-        for nc_file in nc_files:
-            match = re.search(r'(\d{8})', nc_file)
-            if not match:
-                print(f"Konnte kein Datum im Dateinamen finden: {nc_file}")
+        for month in months:
+            month_url = urljoin(year_url, f"{month}/")
+            resp_month = requests.get(month_url)
+            if resp_month.status_code != 200:
                 continue
-            date_str = match.group(1)
-            file_date = datetime.datetime.strptime(date_str, "%Y%m%d").date()
 
-            if already_downloaded(conn, sat, file_date):
-                continue  # Daten schon vorhanden
+            soup_month = BeautifulSoup(resp_month.text, 'html.parser')
+            nc_files = [link.get('href') for link in soup_month.find_all('a')
+                        if link.get('href') and link.get('href').endswith('.nc')]
 
-            file_url = urljoin(month_url, nc_file)
-            local_filename = f"/tmp/{sat}_{nc_file}"
+            for nc_file in nc_files:
+                match = re.search(r'(\d{8})', nc_file)
+                if not match:
+                    print(f"Konnte kein Datum im Dateinamen finden: {nc_file}")
+                    continue
+                date_str = match.group(1)
+                file_date = datetime.datetime.strptime(date_str, "%Y%m%d").date()
 
-            print(f"Download: {file_url}")
-            if download_file(file_url, local_filename):
-                print(f"Verarbeite: {local_filename}")
-                try:
-                    process_and_store_nc(conn, sat, local_filename)
-                except Exception as e:
-                    print(f"Fehler beim Verarbeiten: {e}")
-                finally:
-                    os.remove(local_filename)
-            else:
-                print(f"Download fehlgeschlagen: {file_url}")
+                with engine.begin() as conn:
+                    if already_downloaded(conn, sat, file_date):
+                        continue
+
+                file_url = urljoin(month_url, nc_file)
+                local_filename = f"/tmp/{sat}_{nc_file}"
+
+                print(f"Download: {file_url}")
+                if download_file(file_url, local_filename):
+                    print(f"Verarbeite: {local_filename}")
+                    try:
+                        with engine.begin() as conn:
+                            process_and_store_nc(conn, sat, local_filename)
+                    except Exception as e:
+                        print(f"Fehler beim Verarbeiten: {e}")
+                    finally:
+                        os.remove(local_filename)
+                else:
+                    print(f"Download fehlgeschlagen: {file_url}")
 
 if __name__ == "__main__":
     main()
