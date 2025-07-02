@@ -44,9 +44,9 @@ def process_and_store_nc(conn, sat, filepath):
     times = ds.variables['L1a_SciData_TimeStamp'][:]  # time dimension
     time_units = ds.variables['L1a_SciData_TimeStamp'].units
     base_time = netCDF4.num2date(times, time_units)
-    energy = ds.variables['energy'][:]  # energy levels
-    flux = ds.variables['flux'][:]  # shape: time x species x energy
-    species_var = ds.variables['species']  # variable with species names
+    energy = ds.variables['L1a_EngData_Flag'][:]  # energy levels
+    flux = ds.variables['T1_DifferentialProtonFluxes'][:]  # shape: time x species x energy
+    species_var = ds.variables['Instrument_Serial_Number']  # variable with species names
     species_names = [s.tostring().decode('ascii').strip() for s in species_var[:]]
 
     # Insert each measurement
