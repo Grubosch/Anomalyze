@@ -47,6 +47,7 @@ def convert_time(t):
         t = t.data
     # Falls cftime-Objekt, in datetime umwandeln
     if hasattr(t, 'year') and hasattr(t, 'month') and hasattr(t, 'day'):
+        print("check")
         return datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
     return t
 
@@ -69,15 +70,14 @@ def process_and_store_nc(conn, sat, filepath):
     """)
     
     for t_idx in range(len(base_time)):
-        print(base_time)
         time_val = base_time[t_idx][0]
-        print(time_val)
         time_val = convert_time(time_val)
+        print("check2")
 
         flux_sum_T1 = np.nansum(flux_T1[t_idx, :])
         flux_sum_T2 = np.nansum(flux_T2[t_idx, :])
         flux_sum_T3 = np.nansum(flux_T3[t_idx, :])
-        
+        print("check3")
         if not np.isnan(flux_sum_T1):
             conn.execute(ins, {
                 "satellite": sat,
