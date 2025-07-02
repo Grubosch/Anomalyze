@@ -42,12 +42,12 @@ def download_file(url, local_filename):
 
 
 def convert_time(t):
-    # Falls MaskedArray, hole rohen Wert
+    # Falls MaskedArray, rohen Wert extrahieren
     if isinstance(t, np.ma.MaskedArray):
         t = t.data
-    # Falls cftime-Objekt, in datetime konvertieren
-    if hasattr(t, 'isoformat'):
-        return datetime.fromisoformat(t.isoformat())
+    # Falls cftime-Objekt, in datetime umwandeln
+    if hasattr(t, 'year') and hasattr(t, 'month') and hasattr(t, 'day'):
+        return datetime(t.year, t.month, t.day, t.hour, t.minute, t.second)
     return t
 
 def process_and_store_nc(conn, sat, filepath):
