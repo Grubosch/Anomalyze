@@ -49,7 +49,7 @@ def process_and_store_nc(conn, sat, filepath):
     base_time = netCDF4.num2date(times, time_units)
     
     # Energiewerte aus einem passenden Array (hier als Beispiel L1a_EngData_Flag rausgenommen, lieber energy_T1 nehmen)
-    energy = ds.variables['energy_T1'][:]  # Energie-Bins für T1, ähnlich für T2 und T3
+    energy = ds.variables['energy_T1_label'][:]  # Energie-Bins für T1, ähnlich für T2 und T3
     
     # Protonfluss-Daten auslesen
     flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]  # dims: Zeit x Energie
