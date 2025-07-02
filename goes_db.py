@@ -42,29 +42,35 @@ def download_file(url, local_filename):
 
 
 def convert_time(t):
+    # Falls MaskedArray, hole rohen Wert
     if isinstance(t, np.ma.MaskedArray):
         t = t.data
+    # Falls cftime-Objekt, in datetime konvertieren
     if hasattr(t, 'isoformat'):
         return datetime.fromisoformat(t.isoformat())
     return t
 
 def process_and_store_nc(conn, sat, filepath):
     ds = netCDF4.Dataset(filepath)
+    
+    # Zeitwerte auslesen
     times = ds.variables['L1a_SciData_TimeStamp'][:]
     time_units = ds.variables['L1a_SciData_TimeStamp'].units
     base_time = netCDF4.num2date(times, time_units)
     
+    # Protonenflussdaten auslesen
     flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]
     flux_T2 = ds.variables['T2_DifferentialProtonFluxes'][:]
     flux_T3 = ds.variables['T3_DifferentialProtonFluxes'][:]
-    
+
     ins = text("""
         INSERT INTO particle_flux (satellite, time, species, flux)
         VALUES (:satellite, :time, :species, :flux)
     """)
     
-    for t_idx, time_val in enumerate(base_time):
-        time_std = convert_time(time_val)
+    for t_idx in range(len(base_time)):
+        time_val = base_time[t_idx]
+        time_val = convert_time(time_val)
         
         flux_sum_T1 = np.nansum(flux_T1[t_idx, :])
         flux_sum_T2 = np.nansum(flux_T2[t_idx, :])
@@ -73,21 +79,21 @@ def process_and_store_nc(conn, sat, filepath):
         if not np.isnan(flux_sum_T1):
             conn.execute(ins, {
                 "satellite": sat,
-                "time": time_std,
+                "time": time_val,
                 "species": "T1",
                 "flux": float(flux_sum_T1)
             })
         if not np.isnan(flux_sum_T2):
             conn.execute(ins, {
                 "satellite": sat,
-                "time": time_std,
+                "time": time_val,
                 "species": "T2",
                 "flux": float(flux_sum_T2)
             })
         if not np.isnan(flux_sum_T3):
             conn.execute(ins, {
                 "satellite": sat,
-                "time": time_std,
+                "time": time_val,
                 "species": "T3",
                 "flux": float(flux_sum_T3)
             })
