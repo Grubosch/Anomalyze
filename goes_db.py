@@ -59,45 +59,180 @@ def process_and_store_nc(conn, sat, filepath):
     base_time = netCDF4.num2date(times, time_units)
     
     # Protonenflussdaten auslesen
-    flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]
-    flux_T2 = ds.variables['T2_DifferentialProtonFluxes'][:]
-    flux_T3 = ds.variables['T3_DifferentialProtonFluxes'][:]
+    pro_flux_T1 = ds.variables['T1_DifferentialProtonFluxes'][:]
+    pro_flux_T2 = ds.variables['T2_DifferentialProtonFluxes'][:]
+    pro_flux_T3 = ds.variables['T3_DifferentialProtonFluxes'][:]
+
+    pro_flux_T1_unc = ds.variables['T1_DifferentialProtonFluxUncertainties'][:]
+    pro_flux_T2_unc = ds.variables['T2_DifferentialProtonFluxUncertainties'][:]
+    pro_flux_T3_unc = ds.variables['T3_DifferentialProtonFluxUncertainties'][:]
+    # Alphaflussdaten auslesen
+    alp_flux_T1 = ds.variables['T1_DifferentialAlphaFluxes'][:]
+    alp_flux_T2 = ds.variables['T2_DifferentialAlphaFluxes'][:]
+    alp_flux_T3 = ds.variables['T3_DifferentialAlphaFluxes'][:]
+
+    alp_flux_T1_unc = ds.variables['T1_DifferentialAlphaFluxUncertainties'][:]
+    alp_flux_T2_unc = ds.variables['T2_DifferentialAlphaFluxUncertainties'][:]
+    alp_flux_T3_unc = ds.variables['T3_DifferentialAlphaFluxUncertainties'][:]
 
     ins = text("""
-        INSERT INTO particle_flux (satellite, time, species, flux)
-        VALUES (:satellite, :time, :species, :flux)
+        INSERT INTO particle_flux (satellite, time, species, ProtonT1.1, ProtonT1.1_unc, AlphaT1.1, AlphaT1.1_unc, ProtonT1.2, ProtonT1.2_unc, AlphaT1.2, AlphaT1.2_unc, ProtonT1.3, ProtonT1.3_unc, AlphaT1.3, AlphaT1.3_unc, ProtonT1.4, ProtonT1.4_unc, AlphaT1.4, AlphaT1.4_unc, ProtonT1.5, ProtonT1.5_unc, AlphaT1.5, AlphaT1.5_unc, ProtonT1.6, ProtonT1.6_unc, AlphaT1.6, AlphaT1.6_unc, ProtonT2.1, ProtonT2.1_unc, AlphaT2.1, AlphaT2.1_unc, ProtonT2.2, ProtonT2.2_unc, AlphaT2.2, AlphaT2.2_unc, ProtonT3.1, ProtonT3.1_unc, AlphaT3.1, AlphaT3.1_unc, ProtonT3.2, ProtonT3.2_unc, AlphaT3.2, AlphaT3.2_unc, ProtonT3.3, ProtonT3.3_unc, AlphaT3.3, AlphaT3.3_unc, ProtonT3.4, ProtonT3.4_unc, AlphaT3.4, AlphaT3.4_unc, ProtonT3.5, ProtonT3.5_unc, AlphaT3.5, AlphaT3.5_unc)
+        VALUES (:satellite, :time, :species, :ProtonT1.1, :ProtonT1.1_unc, :AlphaT1.1, :AlphaT1.1_unc, :ProtonT1.2, :ProtonT1.2_unc, :AlphaT1.2, :AlphaT1.2_unc, :ProtonT1.3, :ProtonT1.3_unc, :AlphaT1.3, :AlphaT1.3_unc, :ProtonT1.4, :ProtonT1.4_unc, :AlphaT1.4, :AlphaT1.4_unc, :ProtonT1.5, :ProtonT1.5_unc, :AlphaT1.5, :AlphaT1.5_unc, :ProtonT1.6, :ProtonT1.6_unc, :AlphaT1.6, :AlphaT1.6_unc, :ProtonT2.1, :ProtonT2.1_unc, :AlphaT2.1, :AlphaT2.1_unc, :ProtonT2.2, :ProtonT2.2_unc, :AlphaT2.2, :AlphaT2.2_unc, :ProtonT3.1, :ProtonT3.1_unc, :AlphaT3.1, :AlphaT3.1_unc, :ProtonT3.2, :ProtonT3.2_unc, :AlphaT3.2, :AlphaT3.2_unc, :ProtonT3.3, :ProtonT3.3_unc, :AlphaT3.3, :AlphaT3.3_unc, :ProtonT3.4, :ProtonT3.4_unc, :AlphaT3.4, :AlphaT3.4_unc, :ProtonT3.5, :ProtonT3.5_unc, :AlphaT3.5, :AlphaT3.5_unc)
     """)
     
     for t_idx in range(len(base_time)):
         time_val = base_time[t_idx][0]
         time_val = convert_time(time_val)
         print(flux_T1[t_idx,:])
-        print(flux_T1[t_idx,0])
+        print()
+#proton flux for all Ts and for D1 and D2 plus uncertainties
+        d1_T1_pro_flux=pro_flux_T1[t_idx,0]
+        d1_T2_pro_flux=pro_flux_T2[t_idx,0]
+        d1_T3_pro_flux=pro_flux_T3[t_idx,0]
 
-        flux_sum_T1 = np.nansum(flux_T1[t_idx, :])
-        flux_sum_T2 = np.nansum(flux_T2[t_idx, :])
-        flux_sum_T3 = np.nansum(flux_T3[t_idx, :])
-        if not np.isnan(flux_sum_T1):
-            conn.execute(ins, {
-                "satellite": sat,
-                "time": time_val,
-                "species": "T1",
-                "flux": float(flux_sum_T1)
-            })
-        if not np.isnan(flux_sum_T2):
-            conn.execute(ins, {
-                "satellite": sat,
-                "time": time_val,
-                "species": "T2",
-                "flux": float(flux_sum_T2)
-            })
-        if not np.isnan(flux_sum_T3):
-            conn.execute(ins, {
-                "satellite": sat,
-                "time": time_val,
-                "species": "T3",
-                "flux": float(flux_sum_T3)
-            })
+        d1_T1_pro_flux_unc=pro_flux_T1_unc[t_idx,0]
+        d1_T2_pro_flux_unc=pro_flux_T2_unc[t_idx,0]
+        d1_T3_pro_flux_unc=pro_flux_T3_unc[t_idx,0]
+
+        d2_T1_pro_flux=pro_flux_T1[t_idx,1]
+        d2_T2_pro_flux=pro_flux_T2[t_idx,1]
+        d2_T3_pro_flux=pro_flux_T3[t_idx,1]
+
+        d2_T1_pro_flux_unc=pro_flux_T1_unc[t_idx,1]
+        d2_T2_pro_flux_unc=pro_flux_T2_unc[t_idx,1]
+        d2_T3_pro_flux_unc=pro_flux_T3_unc[t_idx,1]
+#alpha flux for all Ts and for D1 and D2 plus uncertainties
+        d1_T1_alp_flux=alp_flux_T1[t_idx,0]
+        d1_T2_alp_flux=alp_flux_T2[t_idx,0]
+        d1_T3_alp_flux=alp_flux_T3[t_idx,0]
+
+        d1_T1_alp_flux_unc=alp_flux_T1_unc[t_idx,0]
+        d1_T2_alp_flux_unc=alp_flux_T2_unc[t_idx,0]
+        d1_T3_alp_flux_unc=alp_flux_T3_unc[t_idx,0]
+
+        d2_T1_alp_flux=alp_flux_T1[t_idx,1]
+        d2_T2_alp_flux=alp_flux_T2[t_idx,1]
+        d2_T3_alp_flux=alp_flux_T3[t_idx,1]
+
+        d2_T1_alp_flux_unc=alp_flux_T1_unc[t_idx,1]
+        d2_T2_alp_flux_unc=alp_flux_T2_unc[t_idx,1]
+        d2_T3_alp_flux_unc=alp_flux_T3_unc[t_idx,1]
+
+        conn.execute(ins, {
+            "satellite": sat,
+            "time": time_val,
+            "species": "D1",
+            "ProtonT1.1":d1_T1_pro_flux[0],
+            "ProtonT1.1_unc":d1_T1_pro_flux_unc[0],
+            "AlphaT1.1":d1_T1_alp_flux[0], 
+            "AlphaT1.1_unc":d1_T1_alp_flux_unc[0],
+            "ProtonT1.2":d1_T1_pro_flux[1],
+            "ProtonT1.2_unc":d1_T1_pro_flux_unc[1],
+            "AlphaT1.2":d1_T1_alp_flux[1], 
+            "AlphaT1.2_unc":d1_T1_alp_flux_unc[1],
+            "ProtonT1.3":d1_T1_pro_flux[2],
+            "ProtonT1.3_unc":d1_T1_pro_flux_unc[2],
+            "AlphaT1.3":d1_T1_alp_flux[2], 
+            "AlphaT1.3_unc":d1_T1_alp_flux_unc[2],
+            "ProtonT1.4":d1_T1_pro_flux[3],
+            "ProtonT1.4_unc":d1_T1_pro_flux_unc[3],
+            "AlphaT1.4":d1_T1_alp_flux[3], 
+            "AlphaT1.4_unc":d1_T1_alp_flux_unc[3],
+            "ProtonT1.5":d1_T1_pro_flux[4],
+            "ProtonT1.5_unc":d1_T1_pro_flux_unc[4],
+            "AlphaT1.5":d1_T1_alp_flux[4], 
+            "AlphaT1.5_unc":d1_T1_alp_flux_unc[4],
+            "ProtonT1.6":d1_T1_pro_flux[5],
+            "ProtonT1.6_unc":d1_T1_pro_flux_unc[5],
+            "AlphaT1.6":d1_T1_alp_flux[5], 
+            "AlphaT1.6_unc":d1_T1_alp_flux_unc[5],
+            "ProtonT2.1":d1_T2_pro_flux[0],
+            "ProtonT2.1_unc":d1_T2_pro_flux_unc[0],
+            "AlphaT2.1":d1_T2_alp_flux[0], 
+            "AlphaT2.1_unc":d1_T2_alp_flux_unc[0],
+            "ProtonT2.2":d1_T2_pro_flux[1],
+            "ProtonT2.2_unc":d1_T2_pro_flux_unc[1],
+            "AlphaT2.2":d1_T2_alp_flux[1], 
+            "AlphaT2.2_unc":d1_T2_alp_flux_unc[1],
+            "ProtonT3.1":d1_T3_pro_flux[0],
+            "ProtonT3.1_unc":d1_T3_pro_flux_unc[0],
+            "AlphaT3.1":d1_T3_alp_flux[0], 
+            "AlphaT3.1_unc":d1_T3_alp_flux_unc[0],
+            "ProtonT3.2":d1_T3_pro_flux[1],
+            "ProtonT3.2_unc":d1_T3_pro_flux_unc[1],
+            "AlphaT3.2":d1_T3_alp_flux[1], 
+            "AlphaT3.2_unc":d1_T3_alp_flux_unc[1],
+            "ProtonT3.3":d1_T3_pro_flux[2],
+            "ProtonT3.3_unc":d1_T3_pro_flux_unc[2],
+            "AlphaT3.3":d1_T3_alp_flux[2], 
+            "AlphaT3.3_unc":d1_T3_alp_flux_unc[2],
+            "ProtonT3.4":d1_T3_pro_flux[3],
+            "ProtonT3.4_unc":d1_T3_pro_flux_unc[3],
+            "AlphaT3.4":d1_T3_alp_flux[3], 
+            "AlphaT3.4_unc":d1_T3_alp_flux_unc[3],
+            "ProtonT3.5":d1_T3_pro_flux[4],
+            "ProtonT3.5_unc":d1_T3_pro_flux_unc[4],
+            "AlphaT3.5":d1_T3_alp_flux[4], 
+            "AlphaT3.5_unc":d1_T3_alp_flux_unc[4],
+        })
+        conn.execute(ins, {
+            "satellite": sat,
+            "time": time_val,
+            "species": "D2",
+            "ProtonT1.1":d2_T1_pro_flux[0],
+            "ProtonT1.1_unc":d2_T1_pro_flux_unc[0],
+            "AlphaT1.1":d2_T1_alp_flux[0], 
+            "AlphaT1.1_unc":d2_T1_alp_flux_unc[0],
+            "ProtonT1.2":d2_T1_pro_flux[1],
+            "ProtonT1.2_unc":d2_T1_pro_flux_unc[1],
+            "AlphaT1.2":d2_T1_alp_flux[1], 
+            "AlphaT1.2_unc":d2_T1_alp_flux_unc[1],
+            "ProtonT1.3":d2_T1_pro_flux[2],
+            "ProtonT1.3_unc":d2_T1_pro_flux_unc[2],
+            "AlphaT1.3":d2_T1_alp_flux[2], 
+            "AlphaT1.3_unc":d2_T1_alp_flux_unc[2],
+            "ProtonT1.4":d2_T1_pro_flux[3],
+            "ProtonT1.4_unc":d2_T1_pro_flux_unc[3],
+            "AlphaT1.4":d2_T1_alp_flux[3], 
+            "AlphaT1.4_unc":d2_T1_alp_flux_unc[3],
+            "ProtonT1.5":d2_T1_pro_flux[4],
+            "ProtonT1.5_unc":d2_T1_pro_flux_unc[4],
+            "AlphaT1.5":d2_T1_alp_flux[4], 
+            "AlphaT1.5_unc":d2_T1_alp_flux_unc[4],
+            "ProtonT1.6":d2_T1_pro_flux[5],
+            "ProtonT1.6_unc":d2_T1_pro_flux_unc[5],
+            "AlphaT1.6":d2_T1_alp_flux[5], 
+            "AlphaT1.6_unc":d2_T1_alp_flux_unc[5],
+            "ProtonT2.1":d2_T2_pro_flux[0],
+            "ProtonT2.1_unc":d2_T2_pro_flux_unc[0],
+            "AlphaT2.1":d2_T2_alp_flux[0], 
+            "AlphaT2.1_unc":d2_T2_alp_flux_unc[0],
+            "ProtonT2.2":d2_T2_pro_flux[1],
+            "ProtonT2.2_unc":d2_T2_pro_flux_unc[1],
+            "AlphaT2.2":d2_T2_alp_flux[1], 
+            "AlphaT2.2_unc":d2_T2_alp_flux_unc[1],
+            "ProtonT3.1":d2_T3_pro_flux[0],
+            "ProtonT3.1_unc":d2_T3_pro_flux_unc[0],
+            "AlphaT3.1":d2_T3_alp_flux[0], 
+            "AlphaT3.1_unc":d2_T3_alp_flux_unc[0],
+            "ProtonT3.2":d2_T3_pro_flux[1],
+            "ProtonT3.2_unc":d2_T3_pro_flux_unc[1],
+            "AlphaT3.2":d2_T3_alp_flux[1], 
+            "AlphaT3.2_unc":d2_T3_alp_flux_unc[1],
+            "ProtonT3.3":d2_T3_pro_flux[2],
+            "ProtonT3.3_unc":d2_T3_pro_flux_unc[2],
+            "AlphaT3.3":d2_T3_alp_flux[2], 
+            "AlphaT3.3_unc":d2_T3_alp_flux_unc[2],
+            "ProtonT3.4":d2_T3_pro_flux[3],
+            "ProtonT3.4_unc":d2_T3_pro_flux_unc[3],
+            "AlphaT3.4":d2_T3_alp_flux[3], 
+            "AlphaT3.4_unc":d2_T3_alp_flux_unc[3],
+            "ProtonT3.5":d2_T3_pro_flux[4],
+            "ProtonT3.5_unc":d2_T3_pro_flux_unc[4],
+            "AlphaT3.5":d2_T3_alp_flux[4], 
+            "AlphaT3.5_unc":d2_T3_alp_flux_unc[4],
+        })
+
 
 def main():
     engine = create_engine(DB_URI)
