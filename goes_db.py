@@ -71,7 +71,6 @@ def process_and_store_nc(conn, sat, filepath):
     for t_idx in range(len(base_time)):
         time_val = base_time[t_idx][0]
         time_val = convert_time(time_val)
-        print(flux_T1)
         print(flux_T1[t_idx])
         flux_sum_T1 = np.nansum(flux_T1[t_idx, :])
         flux_sum_T2 = np.nansum(flux_T2[t_idx, :])
