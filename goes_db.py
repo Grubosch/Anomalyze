@@ -39,7 +39,6 @@ def download_file(url, local_filename):
                 f.write(chunk)
     return True
 
-def process_and_store_nc(conn, sat, filepath):
 
 def process_and_store_nc(conn, sat, filepath):
     ds = netCDF4.Dataset(filepath)
