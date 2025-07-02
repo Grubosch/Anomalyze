@@ -75,9 +75,11 @@ def main():
 
             # Lade die Index-Seite für die Jahre
             resp = requests.get(url_base)
+            print(f"Öffne {url_base} => Status: {resp.status_code}")
             if resp.status_code != 200:
                 print(f"Konnte Index-Seite nicht öffnen: {url_base}")
                 continue
+            print(f"Länge der Antwort: {len(resp.text)}")
 
             soup = BeautifulSoup(resp.text, 'html.parser')
             years = []
@@ -85,10 +87,11 @@ def main():
                 href = link.get('href')
                 if href and href.startswith('20') and href.endswith('/'):
                     years.append(href.rstrip('/'))
-
+            print(f"Gefundene Jahre für {sat}: {years}")
             for year in years:
                 year_url = urljoin(url_base, f"{year}/")
                 resp_year = requests.get(year_url)
+                print(f"Öffne Jahr-URL {year_url} => Status: {resp_year.status_code}")
                 if resp_year.status_code != 200:
                     continue
 
@@ -98,6 +101,7 @@ def main():
                     href = link.get('href')
                     if href and href.endswith('.nc'):
                         nc_files.append(href)
+                print(f"Gefundene Dateien im Jahr {year} für {sat}: {nc_files}")
                 for nc_file in nc_files:
                     date_str = nc_file.split("_")[1]  # z.B. "20250701"
                     file_date = datetime.datetime.strptime(date_str, "%Y%m%d").date()
