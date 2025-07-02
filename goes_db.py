@@ -115,7 +115,11 @@ def main():
                 nc_files.append(href)
 
         for nc_file in nc_files:
-            date_str = nc_file.split("_")[1]  # z.B. "20250701"
+            match = re.search(r'(\d{8})', nc_file)
+            if not match:
+                print(f"Konnte kein Datum im Dateinamen finden: {nc_file}")
+                continue
+            date_str = match.group(1)
             file_date = datetime.datetime.strptime(date_str, "%Y%m%d").date()
 
             if already_downloaded(conn, sat, file_date):
